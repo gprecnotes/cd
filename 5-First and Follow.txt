@@ -1,0 +1,117 @@
+import java.util.*;
+
+public class Main {
+
+    static int n;
+    static String[] productions = new String[10];
+    static Set<Character> firstSet = new HashSet<>();
+    static Set<Character> followSet = new HashSet<>();
+    static Set<Character> visitedFirst = new HashSet<>();
+    static Set<Character> visitedFollow = new HashSet<>();
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Enter the number of productions:");
+        n = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+
+        System.out.println("Enter the productions (e.g., E=E+T):");
+        for (int i = 0; i < n; i++) {
+            productions[i] = scanner.nextLine().trim();
+            // Ensure the production is valid
+            if (productions[i].length() < 3 || productions[i].charAt(1) != '=') {
+                System.out.println("Invalid production: " + productions[i]);
+                return;
+            }
+        }
+
+        while (true) {
+            System.out.println("Enter the element whose First & Follow is to be found: ");
+            char c = scanner.nextLine().trim().charAt(0);
+
+            firstSet.clear();
+            visitedFirst.clear();
+            findFirst(c);
+            System.out.println("First(" + c + ") = " + firstSet);
+
+            followSet.clear();
+            visitedFollow.clear();
+            findFollow(c);
+            System.out.println("Follow(" + c + ") = " + followSet);
+
+            System.out.println("Continue (0/1)? ");
+            if (scanner.nextInt() != 1) break;
+            scanner.nextLine(); // Consume newline
+        }
+
+        scanner.close();
+    }
+
+    static void findFirst(char c) {
+        if (!Character.isUpperCase(c)) {
+            firstSet.add(c);
+            return;
+        }
+
+        // Prevent infinite recursion
+        if (visitedFirst.contains(c)) return;
+        visitedFirst.add(c);
+
+        for (String production : productions) {
+            if (production == null || production.length() < 3) continue;
+            if (production.charAt(0) == c) {
+                char next = production.charAt(2);
+                if (next == '$') {
+                    findFollow(production.charAt(0));
+                } else if (Character.isLowerCase(next)) {
+                    firstSet.add(next);
+                } else {
+                    findFirst(next);
+                }
+            }
+        }
+    }
+
+    static void findFollow(char c) {
+        if (productions[0].charAt(0) == c) {
+            followSet.add('$');
+        }
+
+        // Prevent infinite recursion
+        if (visitedFollow.contains(c)) return;
+        visitedFollow.add(c);
+
+        for (String production : productions) {
+            if (production == null || production.length() < 3) continue;
+            for (int j = 2; j < production.length(); j++) {
+                if (production.charAt(j) == c) {
+                    if (j + 1 < production.length()) {
+                        findFirst(production.charAt(j + 1));
+                        followSet.addAll(firstSet);
+                        firstSet.remove('$');
+                    }
+                    if (j + 1 == production.length() && production.charAt(0) != c) {
+                        findFollow(production.charAt(0));
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+
+Enter the number of productions:
+3
+Enter the productions (e.g., E=E+T):
+A=abc
+A=def
+A=ghi
+Enter the element whose First & Follow is to be found:
+A
+First(A) = [a, d, g]
+Follow(A) = [$]
+Continue (0/1)?
+0
